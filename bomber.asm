@@ -21,6 +21,7 @@ JetColorPtr     word                    ; pointer to player0 color table
 BomberSpritePtr word                    ; points to player1 sprite table
 BomberColorPtr  word                    ; points to player1 color table
 JetAnimOffset   byte                    ; player0 sprite frame offset
+Random          byte                    ; randome number generated to set enemy X
 
 ; *******************************************************************
 ; Define constants
@@ -48,6 +49,8 @@ Reset:
     sta BomberYPos                      ; Bomber Y Position
     lda #54
     sta BomberXPos                      ; Bomber X Position
+    lda #%11010100
+    sta Random                          ; Random = $D4
 
 ; *******************************************************************
 ; Initialize Pointers to correct lookup table addresses
@@ -224,8 +227,7 @@ UpdateBomberPosition:
     dec BomberYPos                      ; else decrement bomber y pos
     jmp EndPositionUpdate
 .ResetBomberPosition
-    lda #96
-    sta BomberYPos
+    jsr GetRandomBomberPos              ; call subroutine for next random enemy X
 
 EndPositionUpdate:                      ; fallback for position update code
 
@@ -253,6 +255,37 @@ SetObjectXPos subroutine
     asl                                 ; four shift lefts to get only the top 4 bits
     sta HMP0,Y                          ; store the fine offset to the correct HMxx
     sta RESP0,Y                         ; fix object position in 15 step increment
+    rts
+
+; *******************************************************************
+; Subroutine to generate a LFSR random number
+; *******************************************************************
+; *******************************************************************
+; Generate a random number
+; Divide the random value by 4 to limit the size of the result to
+; match the river size.
+; Add 30 to compensate for the left green playfield
+; *******************************************************************
+GetRandomBomberPos  subroutine
+    lda Random
+    asl
+    eor Random
+    asl
+    eor Random
+    asl
+    asl
+    eor Random
+    asl
+    rol Random                          ; performs a series of shifts and bit ops
+    lsr
+    lsr                                 ; divide by 4 by performing to right shifts
+    sta BomberXPos                      ; save it to the variable BomberXPos
+    lda #30
+    adc BomberXPos                      ; adds 30 + BomberXPos to compensate left playfield
+    sta BomberXPos                      ; and sets new value to bomber x-position
+
+    lda #96
+    sta BomberYPos                      ; sets the y-position to the top of the screen
     rts
 
 ; *******************************************************************
