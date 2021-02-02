@@ -16,6 +16,11 @@ JetXPos         byte                    ; player0 x-position
 JetYPos         byte                    ; player0 y-position
 BomberXPos      byte                    ; player1 x-position
 BomberYPos      byte                    ; player1 y-position
+Score           byte                    ; 2-digit score stored as BCD
+Timer           byte                    ; 2-digit timer stored as BCD
+Temp            byte                    ; auxilary variable to store temp score values
+OnesDigitOffset word                    ; lookup table offset for the score 1's digit
+TensDigitOffset word                    ; lookup table offset for the score 10's digit
 JetSpritePtr    word                    ; pointer to player0 sprite table
 JetColorPtr     word                    ; pointer to player0 color table
 BomberSpritePtr word                    ; points to player1 sprite table
@@ -28,6 +33,7 @@ Random          byte                    ; randome number generated to set enemy 
 ; *******************************************************************
 JET_HEIGHT = 9                          ; player0 sprite height
 BOMBER_HEIGHT = 9                       ; player1 sprite height
+DIGITS_HEIGHT = 5                       ; scoreboard digit height (rows in lookup table)
 
 ; *******************************************************************
 ; Start our ROM code at memory address $F000
@@ -51,6 +57,9 @@ Reset:
     sta BomberXPos                      ; Bomber X Position
     lda #%11010100
     sta Random                          ; Random = $D4
+    lda #0
+    sta Score
+    sta Timer                           ; Score = Timer = 0
 
 ; *******************************************************************
 ; Initialize Pointers to correct lookup table addresses
@@ -91,6 +100,8 @@ StartFrame:
     ldy #1
     jsr SetObjectXPos                   ; set player1 horizontal position
 
+    jsr CalculateDigitOffset            ; calculate the scoreboard digit lookup table offset
+
     sta WSYNC
     sta HMOVE                           ; apply the horizontal offsets previously set
 
@@ -117,7 +128,10 @@ StartFrame:
     sta PF2
     sta GRP0
     sta GRP1
+    lda #$1C                            ; set playfield/scoreboard color to white
     sta COLUPF
+    lda #%00000000
+    sta CTRLPF                          ; disable playfield reflection
     REPEAT 20
         sta WSYNC                       ; display 20 scanlines where scoreboard goes
     REPEND
@@ -329,6 +343,46 @@ GetRandomBomberPos  subroutine
 
     lda #96
     sta BomberYPos                      ; sets the y-position to the top of the screen
+    rts
+
+; *******************************************************************
+; Subroutine to handle scoreboard digits to be displayed on screen
+; *******************************************************************
+; convert the high and low nibbles of the variable Score and Timer
+; into the offsets of digits lookup table so the values can be displayed
+; each digit has a height of 5 bytes in the lookup table
+;
+; for the low nibble we need to multiply by 5 to get offset in lookup table
+; can use left shifts to perform multiplication by 2
+; for any number N the value of N*5 = (N*2*2)+N
+;
+; for the upper nibble, since it's already times 16, we need to divide it
+; and then multiply by 5
+; can use right shifts to perform division by 2
+; for any number N the value of (N/16)*5 = (N/2/2)+(N/2/2/2/2)
+CalculateDigitOffset subroutine
+    ldx #1                              ; X register is the loop counter
+.PrepareScoreLoop                       ; this will loop twice, first X=1 and then X=0
+    lda Score,X                         ; load A with Timer(X=1) or Score(X=0)
+    and #$0F                            ; remove 10s part keep right most nibble 00001111
+    sta Temp                            ; save the value of A into temp variable
+    asl                                 ; shift left (it is now N*2)
+    asl                                 ; shift left (it is now N*4)
+    adc Temp                            ; add the value saved in Temp (+N)
+    sta OnesDigitOffset,X               ; save A in OnesDigitOffset+1 or OnesDigitOffset
+
+    lda Score,X                         ; load A with Timer (X=1) or Score (X=0)
+    and #$F0                            ; remove the ones digit by masking 4 bits 11110000
+    lsr                                 ; shift right (is N/2)
+    lsr                                 ; shift right (is N/4)
+    sta Temp                            ; save the value of A into Temp
+    lsr                                 ; shift right (is N/8)
+    lsr                                 ; shift right (is N/16)
+    adc Temp                            ; add the value saved in Temp (N/16+N/4)
+    sta  TensDigitOffset,X              ; store A in TensDigitOffset+1 or TensDigitOffset
+
+    dex                                 ; X--
+    bpl .PrepareScoreLoop               ; While X is positive loop to pass a second time
     rts
 
 ; *******************************************************************
