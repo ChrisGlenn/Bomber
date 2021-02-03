@@ -27,6 +27,8 @@ BomberSpritePtr word                    ; points to player1 sprite table
 BomberColorPtr  word                    ; points to player1 color table
 JetAnimOffset   byte                    ; player0 sprite frame offset
 Random          byte                    ; randome number generated to set enemy X
+ScoreSprite     byte                    ; store the sprite bit pattern for the score
+TimerSprite     byte                    ; store the sprite bit pattern for the timer
 
 ; *******************************************************************
 ; Define constants
@@ -132,9 +134,33 @@ StartFrame:
     sta COLUPF
     lda #%00000000
     sta CTRLPF                          ; disable playfield reflection
-    REPEAT 20
-        sta WSYNC                       ; display 20 scanlines where scoreboard goes
-    REPEND
+    
+    ldx #DIGITS_HEIGHT                  ; start X counter with 5 (height of digits graphic)
+.ScoreDigitLoop:
+    ldy TensDigitOffset                 ; get the tens digit offset for the Score
+    lda Digits,Y                        ; load bitpattern from lookup table
+    and #$F0                            ; mask/remove graphics for the ones digit
+    sta ScoreSprite                     ; save the score tens digit pattern in a variable
+    ldy OnesDigitOffset                 ; get the ones digit offset for the Score
+    lda Digits,Y                        ; load bitpattern from lookup table
+    and #$0F                            ; mask/remove graphics for the tens digit
+    ora ScoreSprite                     ; merge it with the saved tens digit sprite
+    sta ScoreSprite                     ; and save it
+    sta WSYNC                           ; wait for end of the scanline
+    sta PF1                             ; update the playfield to display the score
+
+    ldy TensDigitOffset+1               ; get the left digit offset for the Timer
+    lda Digits,Y                        ; load the digit pattern from lookup table
+    and #$F0                            ; mask/remove the graphics for the ones digit
+    sta TimerSprite                     ; save the timer tens digit pattern in a variable
+    ldy OnesDigitOffset+1               ; get the ones digit offset for the Timer
+    lda Digits,Y                        ; load digit pattern from lookup table
+    and #$0F                            ; mask/remove the graphics from the tens digit
+    ora TimerSprite                     ; merge with the saved tens digit graphics
+    sta TimerSprite                     ; save
+
+    dex                                 ; X--
+    bne .ScoreDigitLoop                 ; if dex !=0 then branch back to score loop
 
 ; *******************************************************************
 ; Display the 96 visible scanlines of our main game (2-line kernal)
