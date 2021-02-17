@@ -87,13 +87,26 @@ Reset:
     sta BomberColorPtr+1               ; hi-byte pointer for color table
 
 ; *******************************************************************
-; Start the main game display loop and frame rendering
+; Start the main game display loop and frame rendering (NTSC)
 ; *******************************************************************
 StartFrame:
 
 ; *******************************************************************
-; Calculations and tasks performed in the pre-VBLANK
+; Calculations and tasks performed in the VBLANK
 ; *******************************************************************
+    ; display VSYNC and VBLANK
+    lda #2
+    sta VBLANK                          ; turn on VBLANK
+    sta VSYNC                           ; turn on VSYNC
+    REPEAT 3
+        sta WSYNC                       ; display 3 recommended lines of VSYNC
+    REPEND
+    lda #0
+    sta VSYNC                           ; turn off VSYNC
+    REPEAT 33                           
+        sta WSYNC                       ; display the recommended lines of VBLANK
+    REPEND
+
     lda JetXPos
     ldy #0
     jsr SetObjectXPos                   ; set player0 horizontal position
@@ -107,18 +120,7 @@ StartFrame:
     sta WSYNC
     sta HMOVE                           ; apply the horizontal offsets previously set
 
-    ; display VSYNC and VBLANK
-    lda #2
-    sta VBLANK                          ; turn on VBLANK
-    sta VSYNC                           ; turn on VSYNC
-    REPEAT 3
-        sta WSYNC                       ; display 3 recommended lines of VSYNC
-    REPEND
     lda #0
-    sta VSYNC                           ; turn off VSYNC
-    REPEAT 37                           
-        sta WSYNC                       ; display the 37 lines of VBLANK
-    REPEND
     sta VBLANK                          ; turn VBLANK off
 
 ; *******************************************************************
