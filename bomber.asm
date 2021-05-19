@@ -59,8 +59,9 @@ Reset:
     sta BomberXPos                      ; Bomber X Position
     lda #%11010100
     sta Random                          ; Random = $D4
-    lda #0
+    lda #4
     sta Score
+    lda #8
     sta Timer                           ; Score = Timer = 0
 
 ; *******************************************************************
@@ -132,7 +133,8 @@ StartFrame:
     sta PF2
     sta GRP0
     sta GRP1
-    lda #$1C                            ; set playfield/scoreboard color to white
+    sta COLUBK
+    lda #$1E                            ; set playfield/scoreboard color to yellow
     sta COLUPF
     lda #%00000000
     sta CTRLPF                          ; disable playfield reflection
@@ -183,6 +185,14 @@ StartFrame:
 
     sta WSYNC
 
+    lda #0
+    sta PF0
+    sta PF1
+    sta PF2
+    sta WSYNC
+    sta WSYNC
+    sta WSYNC
+
 ; *******************************************************************
 ; Display the 96 visible scanlines of our main game (2-line kernal)
 ; *******************************************************************
@@ -200,7 +210,7 @@ GameVisibleLines:
     lda #0                              ; setting PF2
     sta PF2
 
-    ldx #84                             ; X counts the number of remaining scanlines
+    ldx #85                             ; X counts the number of remaining scanlines
 .GameLineLoop:
 .AreWeInsideJetSprite:
     txa                                 ; transfer X to A
