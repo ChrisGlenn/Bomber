@@ -53,7 +53,7 @@ Reset:
 ; *******************************************************************
     lda #10
     sta JetYPos                         ; JetYPos = 10
-    lda #60
+    lda #68
     sta JetXPos                         ; JetXPos = 60
     lda #83
     sta BomberYPos                      ; Bomber Y Position
@@ -61,9 +61,9 @@ Reset:
     sta BomberXPos                      ; Bomber X Position
     lda #%11010100
     sta Random                          ; Random = $D4
-    lda #4
+    lda #0
     sta Score
-    lda #8
+    lda #0
     sta Timer                           ; Score = Timer = 0
 
 ; *******************************************************************
