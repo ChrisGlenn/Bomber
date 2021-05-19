@@ -29,6 +29,8 @@ JetAnimOffset   byte                    ; player0 sprite frame offset
 Random          byte                    ; randome number generated to set enemy X
 ScoreSprite     byte                    ; store the sprite bit pattern for the score
 TimerSprite     byte                    ; store the sprite bit pattern for the timer
+TerrainColor    byte                    ; store the color of the terrain (grass)
+RiverColor      byte                    ; store the color of the river
 
 ; *******************************************************************
 ; Define constants
@@ -197,10 +199,10 @@ StartFrame:
 ; Display the 96 visible scanlines of our main game (2-line kernal)
 ; *******************************************************************
 GameVisibleLines:
-    lda #$84                            ; set color background to blue
-    sta COLUBK
-    lda #$C2
-    sta COLUPF                          ; set playfield color to green
+    lda TerrainColor
+    sta COLUPF                          ; set terrain background color
+    lda RiverColor
+    sta COLUBK                          ; set the river background color
     lda #%00000001                      ; set playfield to reflect
     sta CTRLPF
     lda #$F0
@@ -321,18 +323,11 @@ EndPositionUpdate:                      ; fallback for position update code
 CheckCollisionP0P1:
     lda #%10000000                      ; CXPPMM bit 7 detects P0 and P1 collisions
     bit CXPPMM                          ; check bit 7 with above pattern
-    bne .CollisionP0P1                  ; if collision P0/P1 happened Game Over...
-    jmp CheckCollisionP0PF              ; ...else skip to next collision check
-.CollisionP0P1:
+    bne .P0P1Collided                   ; if collision P0/P1 happened Game Over...
+    jsr SetTerrainRiverColor            ; ...else set playfield color to green/blue...
+    jmp EndCollisionCheck               ; ...else clear collision checks
+.P0P1Collided:
     jsr GameOver                        ; call GameOver subroutine
-
-CheckCollisionP0PF:
-    lda #%10000000                      ; CXP0FB bit 7 detects P0 and PF collision
-    bit CXP0FB                          ; check bit 7 with the above pattern
-    bne .CollisionP0PF                  ; if collision P0/PF happened...
-    jmp EndCollisionCheck               ; ...else skip to the end check
-.CollisionP0PF
-    jsr GameOver
 
 EndCollisionCheck:                      ; fallback
     sta CXCLR                           ; clear all collision flags before next frame
@@ -368,7 +363,10 @@ SetObjectXPos subroutine
 ; *******************************************************************
 GameOver subroutine
     lda #$30
-    sta COLUBK
+    sta TerrainColor                    ; set terrain color to red
+    sta RiverColor                      ; set river color to red
+    lda #0
+    sta Score                           ; Score = 0
     rts
 
 ; *******************************************************************
@@ -441,6 +439,15 @@ CalculateDigitOffset subroutine
     dex                                 ; X--
     bpl .PrepareScoreLoop               ; While X is positive loop to pass a second time
     rts
+
+; *******************************************************************
+; Set the color for the terrain & river to green & blue
+; *******************************************************************
+SetTerrainRiverColor subroutine
+    lda #$C2
+    sta TerrainColor                    ; set terrain color to green
+    lda #$84
+    sta RiverColor                      ; set river color to blue
 
 ; *******************************************************************
 ; Subroutine to waste 12 cycles
