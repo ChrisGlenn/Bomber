@@ -399,6 +399,7 @@ GetRandomBomberPos  subroutine
 
     lda #96
     sta BomberYPos                      ; sets the y-position to the top of the screen
+    inc Score
     rts
 
 ; *******************************************************************
