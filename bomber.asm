@@ -129,17 +129,17 @@ StartFrame:
 ; *******************************************************************
 ; Display the scoreboard lines
 ; *******************************************************************
-    lda #0                              ; clear TIA registers before each frame
+    lda #0                              ; reset TIA registers before displaying the score
+    sta COLUBK
     sta PF0
     sta PF1
     sta PF2
     sta GRP0
     sta GRP1
-    sta COLUBK
-    lda #$1E                            ; set playfield/scoreboard color to yellow
-    sta COLUPF
-    lda #%00000000
-    sta CTRLPF                          ; disable playfield reflection
+    sta CTRLPF
+
+    lda #$1E
+    sta COLUPF                          ; set the scoreboard playfield color with yellow
     
     ldx #DIGITS_HEIGHT                  ; start X counter with 5 (height of digits graphic)
 .ScoreDigitLoop:
@@ -165,7 +165,6 @@ StartFrame:
     ora TimerSprite                     ; merge with the saved tens digit graphics
     sta TimerSprite                     ; save
 
-    ; waste some cycles
     jsr Sleep12Cycles                   ; wastes some cycles
 
     sta PF1                             ; update playfield for Timer display
@@ -253,6 +252,8 @@ GameVisibleLines:
 
     lda #0
     sta JetAnimOffset                   ; reset jet animation frame to zero
+
+    sta WSYNC                           ; wait for a scanline
 
 ; *******************************************************************
 ; Display overscan
