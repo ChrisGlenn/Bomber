@@ -63,7 +63,6 @@ Reset:
     sta Random                          ; Random = $D4
     lda #0
     sta Score
-    lda #0
     sta Timer                           ; Score = Timer = 0
 
 ; *******************************************************************
@@ -315,6 +314,8 @@ UpdateBomberPosition:
     jmp EndPositionUpdate
 .ResetBomberPosition
     jsr GetRandomBomberPos              ; call subroutine for next random enemy X
+    inc Score                           ; Score++
+    inc Timer                           ; Timer++
 
 EndPositionUpdate:                      ; fallback for position update code
 
@@ -399,7 +400,6 @@ GetRandomBomberPos  subroutine
 
     lda #96
     sta BomberYPos                      ; sets the y-position to the top of the screen
-    inc Score
     rts
 
 ; *******************************************************************
