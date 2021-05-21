@@ -326,8 +326,18 @@ UpdateBomberPosition:
     jmp EndPositionUpdate
 .ResetBomberPosition
     jsr GetRandomBomberPos              ; call subroutine for next random enemy X
-    inc Score                           ; Score++
-    inc Timer                           ; Timer++
+
+.SetScoreValues:
+    sed                                 ; set decimal mode for score and timer values
+    lda Score
+    clc
+    adc #1
+    sta Score                           ; add 1 to the score (BCD does not do INC)
+    lda Timer
+    clc
+    adc #1
+    sta Timer                           ; add 1 to the timer (BCD does not do INC)
+    cld                                 ; disable decimal mode
 
 EndPositionUpdate:                      ; fallback for position update code
 
