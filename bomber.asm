@@ -16,6 +16,8 @@ JetXPos         byte                    ; player0 x-position
 JetYPos         byte                    ; player0 y-position
 BomberXPos      byte                    ; player1 x-position
 BomberYPos      byte                    ; player1 y-position
+MissileXPos     byte                    ; missile x-position
+MissileYPos     byte                    ; missile y-position
 Score           byte                    ; 2-digit score stored as BCD
 Timer           byte                    ; 2-digit timer stored as BCD
 Temp            byte                    ; auxilary variable to store temp score values
@@ -275,6 +277,7 @@ CheckP0Up:
     lda JetYPos
     cmp #70                             ; if player Y > 70
     bpl CheckP0Down                     ; then skip increment
+.P0UpPressed:
     inc JetYPos                         ; else increment
     lda #0
     sta JetAnimOffset                   ; reset sprite frame to first
@@ -285,7 +288,8 @@ CheckP0Down:
     bne CheckP0Left                     ; if no match bypass down
     lda JetYPos
     cmp #5                              ; if player Y < 5
-    bmi CheckP0Left                     ; then skip decrement                         
+    bmi CheckP0Left                     ; then skip decrement    
+.P0DownPressed:                     
     dec JetYPos                         ; else decrement
     lda #0
     sta JetAnimOffset                   ; reset sprite frame to first
@@ -297,6 +301,7 @@ CheckP0Left:
     lda JetXPos
     cmp #35                             ; if player X < 35
     bmi CheckP0Right                    ; then skip decrement
+.P0LeftPressed:
     dec JetXPos                         ; else decrement
     lda JET_HEIGHT                      ; 9
     sta JetAnimOffset                   ; set animation offset to second frame
@@ -304,13 +309,25 @@ CheckP0Left:
 CheckP0Right:
     lda #%10000000                      ; player0 joystick right
     bit SWCHA
-    bne EndInputCheck
+    bne CheckButtonPressed
     lda JetXPos
     cmp #100                            ; if player X > 100
-    bpl EndInputCheck                   ; then skip increment
+    bpl CheckButtonPressed              ; then skip increment
+.P0RightPressed:
     inc JetXPos                         ; else increment
     lda JET_HEIGHT                      ; 9
     sta JetAnimOffset                   ; set animation offset to second frame
+
+CheckButtonPressed:
+    lda #%10000000
+    bit INPT4                           ; if button is pressed
+    bne EndInputCheck                   ; else skip increment
+    ; HERE GOES THE LOGIC WHEN BUTTON IS PRESSED
+.SetMisslePos:
+    lda JetXPos
+    sta MissileXPos                     ; set the missle x-position equal to the player's
+    lda JetYPos
+    sta MissileYPos                     ; set the missle y-position equal to the player's
 
 EndInputCheck:                          ; fallback when no input performed
 
