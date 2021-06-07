@@ -68,6 +68,20 @@ Reset:
     sta Timer                           ; Score = Timer = 0
 
 ; *******************************************************************
+; Declare Macro to check if we should display the missle 0
+; *******************************************************************
+    MAC DRAW_MISSLE
+        lda #%00000000                  ; start A with 0 (disabled missle)
+        cpx MissileYPos                 ; compare X current scanline with missle y position
+        bne .SkipMissleDraw             ; if X != missle y pos than skip draw
+.DrawMissle:
+        lda #%00000010                  ; else enable missle 0 display
+        inc MissileYPos                 ; MissleYPos++
+.SkipMissleDraw:
+        sta ENAM0                       ; store correct value in the TIA missle register
+    ENDM
+
+; *******************************************************************
 ; Initialize Pointers to correct lookup table addresses
 ; *******************************************************************
     lda #<JetSprite
@@ -118,6 +132,10 @@ StartFrame:
     lda BomberXPos
     ldy #1
     jsr SetObjectXPos                   ; set player1 horizontal position
+
+    lda MissileXPos                     
+    ldy #2
+    jsr SetObjectXPos                   ; set missle horizontal position
 
     jsr CalculateDigitOffset            ; calculate the scoreboard digit lookup table offset
 
@@ -214,6 +232,7 @@ GameVisibleLines:
 
     ldx #85                             ; X counts the number of remaining scanlines
 .GameLineLoop:
+    DRAW_MISSLE                         ; macro to check if we should draw the missle
 .AreWeInsideJetSprite:
     txa                                 ; transfer X to A
     sec                                 ; set carry flag before subraction
@@ -323,10 +342,14 @@ CheckButtonPressed:
     bit INPT4                           ; if button is pressed
     bne EndInputCheck                   ; else skip increment
     ; HERE GOES THE LOGIC WHEN BUTTON IS PRESSED
-.SetMisslePos:
+.ButtonPressed:
     lda JetXPos
+    clc 
+    ADC #5
     sta MissileXPos                     ; set the missle x-position equal to the player's
     lda JetYPos
+    clc 
+    adc #8
     sta MissileYPos                     ; set the missle y-position equal to the player's
 
 EndInputCheck:                          ; fallback when no input performed
